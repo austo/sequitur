@@ -1,0 +1,33 @@
+{
+  "name": "sequitur",
+  "version": "1.0.0",
+  "description": "Minimal sequential flow control library with resume",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha --opts test/mocha.opts test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/austo/sequitur.git"
+  },
+  "keywords": [
+    "flow",
+    "control",
+    "sequence",
+    "parallel",
+    "resume",
+    "callback"
+  ],
+  "author": "Austin Moran <moraustin@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/austo/sequitur/issues"
+  },
+  "homepage": "https://github.com/austo/sequitur",
+  "devDependencies": {
+    "mocha": "^3.0.2"
+  }
+}
