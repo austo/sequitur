@@ -9,7 +9,7 @@ npm install sequitur
 Example (see [tests](https://github.com/austo/sequitur/blob/master/test/sequence.test.js) for more):
 
 ```javascript
-use 'strict';
+'use strict';
 
 const seq = require('sequitur');
 
