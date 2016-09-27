@@ -8,6 +8,9 @@ const seq = require('../'),
   assert = require('assert'),
   domain = require('domain');
 
+const testUtils = require('./testUtils'),
+  empty = testUtils.empty;
+
 const output = [];
 const expectedOutput = [
   'step 0, value = 0',
@@ -161,13 +164,13 @@ suite('sequence', function() {
 
   test('should call done immediately when function array is empty', done => {
     seq([], err => {
-      assert(err === null);
+      assert.ifError(err);
       done();
     });
   });
 
   test('invalid function array arguments should throw TypeError', done => {
-    const arrayMsg = 'sequence: first argument must be an array';
+    const arrayMsg = 'Sequence: first argument must be an array';
     [{
       val: undefined,
       msg: arrayMsg
@@ -196,12 +199,12 @@ suite('sequence', function() {
       val: [function(next) {
         next();
       }, function() {}],
-      msg: 'sequence: function at index 1 must take at least 1 argument'
+      msg: 'Sequence: function at index 1 must take at least 1 argument'
     }, {
       val: [function(next) {
         next();
       }, 'foo'],
-      msg: 'sequence: non-function at index 1'
+      msg: 'Sequence: non-function at index 1'
     }].forEach(arg => {
       assert.throws(() => seq(arg.val), err => {
         return (err instanceof TypeError) && err.message === arg.msg;
@@ -264,18 +267,6 @@ suite('sequence', function() {
 
 });
 
-suite('empty', function() {
-
-  test('should empty array and retain original reference', () => {
-    let arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-    empty(arr);
-    assert.equal(0, arr.length);
-    assert.strictEqual(arr, arr);
-  });
-
-});
-
-
 function step(ordinal) {
   return function(_i, _next) {
     let i = -1,
@@ -299,10 +290,4 @@ function getFuncs(n) {
     funcs.push(step(i));
   }
   return funcs;
-}
-
-function empty(arr) {
-  for (let i = 0, n = arr.length; i < n; i++) {
-    arr.pop();
-  }
 }

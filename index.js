@@ -1,9 +1,12 @@
 'use strict';
 
-const EventEmitter = require('events');
+const EventEmitter = require('events'),
+  utils = require('./utils');
 
 function seq(funcs, callback) {
-  validateFuncs(funcs);
+  const name = 'Sequence';
+
+  utils.validateFuncs(funcs, 1, name);
 
   let i = 0,
     n = funcs.length,
@@ -13,31 +16,16 @@ function seq(funcs, callback) {
       done: false
     };
 
-  if (typeof callback === 'function') {
-    ee.on('error', callback);
-    useCallback['error'] = true;
-    ee.on('done', callback);
-    useCallback['done'] = true;
-  }
-
-  ee.on('newListener', (evt, fn) => {
-    if (!useCallback[evt]) {
-      return;
-    }
-    if (fn === callback) {
-      return;
-    }
-    if (evt === 'error' || evt === 'done') {
-      ee.removeListener(evt, callback);
-      useCallback[evt] = false;
-    }
-  });
+  ee.name = name;
+  utils.attachHandlers(ee, useCallback, callback);
 
   let prevArgs = [];
 
   function next(err) {
     let args = Array.prototype.slice.call(arguments, 1);
     if (err) {
+      // if useCallback[err] add extra `resume` param
+
       if (i >= n) {
         return ee.emit('error', err);
       }
@@ -55,6 +43,7 @@ function seq(funcs, callback) {
       return funcs[i].apply(null, args);
     }
     if (useCallback['done']) {
+      // add extra `resume` param (null)
       args.unshift(null);
     }
     args.unshift('done');
@@ -62,7 +51,7 @@ function seq(funcs, callback) {
   }
 
   process.nextTick(() => {
-    let e = ensureListeners(ee, Object.keys(useCallback));
+    let e = utils.ensureListeners(ee, useCallback);
     if (e) {
       // If no 'error' event is registered, this will
       // throw a TypeError that can only be handled using
@@ -72,43 +61,14 @@ function seq(funcs, callback) {
       return ee.emit('error', e);
     }
     if (n === 0) {
-      return ee.emit('done', null);
+      return ee.emit('done');
     }
     funcs[i](next);
   });
-  ee.name = 'Sequence';
   return ee;
 }
 
-function validateFuncs(funcs) {
-  if (!Array.isArray(funcs)) {
-    throw new TypeError('sequence: first argument must be an array');
-  }
-
-  funcs.forEach((f, i) => {
-    if (typeof f !== 'function') {
-      throw new TypeError(`sequence: non-function at index ${i}`);
-    }
-    if (!f.length) {
-      throw new TypeError(`sequence: function at index ${i} must take at least 1 argument`);
-    }
-  });
-}
-
-function ensureListeners(ee, events) {
-  let errs = [];
-
-  events.forEach(evt => {
-    if (ee.listenerCount(evt) === 0) {
-      errs.push(`no "${evt}" listener`);
-    }
-  });
-  if (errs.length) {
-    let e = new TypeError('sequence: required listeners not found');
-    e.details = errs;
-    return e;
-  }
-  return null;
-}
+seq.sequence = seq;
+seq.parallel = require('./parallel');
 
 module.exports = seq;
