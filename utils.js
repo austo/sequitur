@@ -1,18 +1,41 @@
 'use strict';
 
-function validateFuncs(funcs, arglen, prefix) {
+function validateArgs(name, funcs, _args, _callback) {
   if (!Array.isArray(funcs)) {
-    throw new TypeError(`${prefix}: first argument must be an array`);
+    throw new TypeError(`${name}: first argument must be an array`);
+  }
+
+  let ctx = {
+    args: []
+  };
+
+  if (Array.isArray(_args)) {
+    ctx.args = _args;
+  }
+  if (typeof _args === 'function') {
+    ctx.callback = _args;
+  }
+  if (typeof _callback === 'function') {
+    ctx.callback = _callback;
+  }
+  // TODO: something smarter when we implement forEach
+  validateFuncs(funcs, ctx.args.length + 1, name);
+  return ctx;
+}
+
+function validateFuncs(funcs, arglen, name) {
+  if (!Array.isArray(funcs)) {
+    throw new TypeError(`${name}: first argument must be an array`);
   }
 
   const articleNoun = arglen === 1 ? '1 argument' : `${arglen} arguments`;
 
   funcs.forEach((f, i) => {
     if (typeof f !== 'function') {
-      throw new TypeError(`${prefix}: non-function at index ${i}`);
+      throw new TypeError(`${name}: non-function at index ${i}`);
     }
     if (f.length < arglen) {
-      throw new TypeError(`${prefix}: function at index ${i} must take at least ${articleNoun}`);
+      throw new TypeError(`${name}: function at index ${i} must take at least ${articleNoun}`);
     }
   });
 }
@@ -76,6 +99,7 @@ module.exports = {
   Context: Context,
   attachHandlers: attachHandlers,
   ensureListeners: ensureListeners,
+  validateArgs: validateArgs,
   validateFuncs: validateFuncs,
   removeAllListeners: removeAllListeners
 };

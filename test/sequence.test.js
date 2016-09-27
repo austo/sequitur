@@ -39,7 +39,7 @@ suite('sequence', function() {
 
   test('should behave correctly with callback', done => {
     seq(getFuncs(8),
-      (err, resume) => {
+      (err, resume, val) => {
         if (err) {
           output.push(err);
           if (resume) {
@@ -50,7 +50,7 @@ suite('sequence', function() {
             assert(false);
           }
         }
-        output.push(`final value = ${resume}`);
+        output.push(`final value = ${val}`);
         output.push('done');
         assert.deepEqual(expectedOutput, output);
         done();
@@ -96,9 +96,9 @@ suite('sequence', function() {
   });
 
   test('should behave correctly with callback and "error" event', done => {
-    seq(getFuncs(8), (err, resume) => {
+    seq(getFuncs(8), (err, resume, val) => {
         assert(err === null);
-        output.push(`final value = ${resume}`);
+        output.push(`final value = ${val}`);
         output.push('done');
         assert.deepEqual(expectedOutput, output);
         done();
@@ -226,6 +226,57 @@ suite('sequence', function() {
     });
   });
 
+  test('passing args array should call all functions with same arguments', done => {
+    seq(getFuncs(5), [2])
+      .on('error', (err, resume) => {
+        assert.ok(err);
+        output.push(err);
+        if (resume) {
+          return resume();
+        }
+        assert.deepEqual(['step 0, value = 3',
+          'BOOM!',
+          'step 1, value = 3',
+          'BOOM!',
+          'step 2, value = 3',
+          'BOOM!',
+          'step 3, value = 3',
+          'BOOM!',
+          'step 4, value = 3',
+          'BOOM!'
+        ], output);
+        done();
+      })
+      .on('done', () => {
+        assert(false);
+      });
+  });
+
+  test('flow should be sane when passing args array', done => {
+    let recv = 0;
+    seq(getFuncs(5, () => ++recv === 2), [1])
+      .on('error', (err, resume) => {
+        assert.ok(err);
+        output.push(err);
+        if (resume) {
+          return resume();
+        }
+        assert(false);
+      })
+      .on('done', (v) => {
+        output.push(`final value = ${v}`);
+        assert.deepEqual([
+          'step 0, value = 2',
+          'step 1, value = 2',
+          'BOOM!',
+          'step 2, value = 2',
+          'step 3, value = 2',
+          'step 4, value = 2', 'final value = 1'
+        ], output);
+        done();
+      });
+  });
+
   suite('no error listener should throw error', function() {
     [{
       name: 'with "done" function',
@@ -267,7 +318,8 @@ suite('sequence', function() {
 
 });
 
-function step(ordinal) {
+function step(ordinal, _errorPredicate) {
+  let errorPredicate = _errorPredicate ? _errorPredicate : v => v % 3 === 0;
   return function(_i, _next) {
     let i = -1,
       next;
@@ -279,15 +331,15 @@ function step(ordinal) {
       i = _i;
     }
     output.push(`step ${ordinal}, value = ${++i}`);
-    let err = (i % 3 === 0) ? 'BOOM!' : null;
+    let err = errorPredicate(i) ? 'BOOM!' : null;
     next(err, i);
   };
 }
 
-function getFuncs(n) {
+function getFuncs(n, errorPredicate) {
   let funcs = [];
   for (let i = 0; i < n; i++) {
-    funcs.push(step(i));
+    funcs.push(step(i, errorPredicate));
   }
   return funcs;
 }

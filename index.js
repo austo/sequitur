@@ -3,10 +3,10 @@
 const EventEmitter = require('events'),
   utils = require('./utils');
 
-function seq(funcs, callback) {
+function seq(funcs, _args, _callback) {
   const name = 'Sequence';
 
-  utils.validateFuncs(funcs, 1, name);
+  let ctx = utils.validateArgs(name, funcs, _args, _callback);
 
   let i = 0,
     n = funcs.length,
@@ -14,40 +14,42 @@ function seq(funcs, callback) {
     useCallback = {
       error: false,
       done: false
-    };
+    },
+    hasArgs = ctx.args.length > 0;
 
   ee.name = name;
-  utils.attachHandlers(ee, useCallback, callback);
+  utils.attachHandlers(ee, useCallback, ctx.callback);
 
   let prevArgs = [];
 
   function next(err) {
-    let args = Array.prototype.slice.call(arguments, 1);
+    let eachArgs = hasArgs ? Array.from(ctx.args) :
+      Array.prototype.slice.call(arguments, 1);
+    i++;
     if (err) {
       // if useCallback[err] add extra `resume` param
-
-      if (i >= n) {
-        return ee.emit('error', err);
+      if (i < n) {
+        let sargs = eachArgs.length ? eachArgs : prevArgs;
+        sargs.push(next);
+        return ee.emit('error', err, function() {
+          funcs[i].apply(null, sargs);
+        });
       }
-      let sargs = args.length ? args : prevArgs;
-      return ee.emit('error', err, function() {
-        sargs.unshift(null);
-        next.apply(null, sargs);
-      });
+      return ee.emit('error', err);
     }
 
-    prevArgs = Array.from(args);
+    prevArgs = Array.from(eachArgs);
 
-    if (++i < n) {
-      args.push(next);
-      return funcs[i].apply(null, args);
+    if (i < n) {
+      eachArgs.push(next);
+      return funcs[i].apply(null, eachArgs);
     }
     if (useCallback['done']) {
       // add extra `resume` param (null)
-      args.unshift(null);
+      eachArgs.unshift(null, null);
     }
-    args.unshift('done');
-    ee.emit.apply(ee, args);
+    eachArgs.unshift('done');
+    ee.emit.apply(ee, eachArgs);
   }
 
   process.nextTick(() => {
@@ -63,7 +65,9 @@ function seq(funcs, callback) {
     if (n === 0) {
       return ee.emit('done');
     }
-    funcs[i](next);
+    let args = hasArgs ? Array.from(ctx.args) : [];
+    args.push(next);
+    funcs[i].apply(null, args);
   });
   return ee;
 }

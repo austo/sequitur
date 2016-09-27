@@ -6,25 +6,8 @@ const EventEmitter = require('events'),
 function parallel(funcs, _args, _callback) {
   const name = 'Parallel',
     allowedEvents = ['done', 'each', 'error'];
-  if (!Array.isArray(funcs)) {
-    throw new TypeError(`${name}: first argument must be an array`);
-  }
-
-  let args = [],
-    arglen = 0,
-    callback;
-
-  if (Array.isArray(_args)) {
-    args = _args;
-    arglen = args.length;
-  }
-  if (typeof _args === 'function') {
-    callback = _args;
-  }
-  if (typeof _callback === 'function') {
-    callback = _callback;
-  }
-  utils.validateFuncs(funcs, arglen + 1, name);
+  
+  let ctx = utils.validateArgs(name, funcs, _args, _callback);
 
   let i = 0,
     n = funcs.length,
@@ -36,7 +19,7 @@ function parallel(funcs, _args, _callback) {
     stopped = false;
 
   ee.name = name;
-  utils.attachHandlers(ee, useCallback, callback);
+  utils.attachHandlers(ee, useCallback, ctx.callback);
 
   // TODO: generated callback should provide a `stop` function on error,
   // which unbinds all pending event handlers to replicate "parallel-first"
@@ -70,7 +53,7 @@ function parallel(funcs, _args, _callback) {
     }
   }
 
-  args.push(handle);
+  ctx.args.push(handle);
 
   process.nextTick(() => {
     let e = utils.ensureListeners(ee, useCallback);
@@ -82,7 +65,7 @@ function parallel(funcs, _args, _callback) {
       return ee.emit('done');
     }
     funcs.forEach(fn => {
-      fn.apply(null, args);
+      fn.apply(null, ctx.args);
     });
   });
   return ee;
