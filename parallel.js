@@ -6,7 +6,7 @@ const EventEmitter = require('events'),
 function parallel(funcs, _args, _callback) {
   const name = 'Parallel',
     allowedEvents = ['done', 'each', 'error'];
-  
+
   let ctx = utils.validateArgs(name, funcs, _args, _callback);
 
   let i = 0,
@@ -40,7 +40,8 @@ function parallel(funcs, _args, _callback) {
       if (i < n) {
         return ee.emit('error', err, stop);
       }
-      return ee.emit('error', err);
+      ee.emit('error', err);
+      return ee.emit('done');
     }
     eachArgs.unshift((i < n) ? stop : null);
     if (useCallback['each']) {

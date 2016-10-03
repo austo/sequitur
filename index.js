@@ -74,5 +74,6 @@ function seq(funcs, _args, _callback) {
 
 seq.sequence = seq;
 seq.parallel = require('./parallel');
+seq.forEach = require('./forEach');
 
 module.exports = seq;
