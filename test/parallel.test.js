@@ -294,7 +294,11 @@ function step(ordinal, arglen, errorPredicate) {
   // arguments array, plus an additional `next` param
   /* jshint ignore:start */
   const fnstr = `(function (${args.join()}) {
-    let args = Array.prototype.slice.call(arguments);
+    let args = new Array(arguments.length),
+      i = args.length;
+    while (i--) {
+      args[i] = arguments[i];
+    }
     let next = args.pop();
     assert.equal('function', typeof next);
     let result = util.format('step %d, called with %j', ordinal, args);

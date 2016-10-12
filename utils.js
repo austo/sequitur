@@ -95,11 +95,27 @@ function removeAllListeners(ee, events) {
   events.forEach(evt => ee.removeAllListeners(evt));
 }
 
+/* jshint ignore:start */
+// see here: https://github.com/petkaantonov/bluebird/wiki/Optimization-killers
+// and here: http://mrale.ph/blog/2015/11/02/crankshaft-vs-arguments-object.html
+// and here: http://stackoverflow.com/questions/23662764/difference-between-array-prototype-slice-callarguments-and-array-applynull-a
+/* jshint ignore:end */
+function slice() {
+  let args = new Array(arguments.length),
+    i = args.length;
+
+  while (i--) {
+    args[i] = arguments[i];
+  }
+  return args;
+}
+
 module.exports = {
   Context: Context,
   attachHandlers: attachHandlers,
   ensureListeners: ensureListeners,
   validateArgs: validateArgs,
   validateFuncs: validateFuncs,
-  removeAllListeners: removeAllListeners
+  removeAllListeners: removeAllListeners,
+  slice: slice
 };

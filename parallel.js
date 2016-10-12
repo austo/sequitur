@@ -31,7 +31,7 @@ function parallel(funcs, _args, _callback) {
   }
 
   function handle(err) {
-    let eachArgs = Array.prototype.slice.call(arguments, 1);
+    let eachArgs = utils.slice.apply(null, arguments).slice(1);
     i++;
     if (err) {
       if (stopped) {

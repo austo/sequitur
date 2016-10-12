@@ -24,7 +24,7 @@ function seq(funcs, _args, _callback) {
 
   function next(err) {
     let eachArgs = hasArgs ? Array.from(ctx.args) :
-      Array.prototype.slice.call(arguments, 1);
+      utils.slice.apply(null, arguments).slice(1);
     i++;
     if (err) {
       // if useCallback[err] add extra `resume` param
