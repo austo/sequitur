@@ -31,5 +31,19 @@ suite('forEach', function() {
       assert.ok(stop);
     });
   });
-  
+
+  test('should handle flat args array if callback takes one argument', done => {
+    let args = [1, 2, 3].map(v => {
+      return { value: v, processed: false };
+    });
+    forEach(args, (v, next) => {
+      v.processed = true;
+      return next(null, v);
+    }, (err, stop) => {
+      if (!stop) {
+        args.forEach(t => assert(t.processed));
+        done();
+      }
+    });
+  });
 });

@@ -3,9 +3,10 @@
 let parallel = require('./parallel');
 
 function forEach(arr, fn, callback) {
-  // TODO: validation, blah, blah, blah
+  // TODO: validation story...
 
-  let funcs = arr.map(args => {
+  let funcs = arr.map(a => {
+    let args = Array.isArray(a) ? a : [a];
     return function(next) {
       args.push(next);
       fn.apply(null, args);
