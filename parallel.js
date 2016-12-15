@@ -7,16 +7,16 @@ function parallel(funcs, _args, _callback) {
   const name = 'Parallel',
     allowedEvents = ['done', 'each', 'error'];
 
-  let ctx = utils.validateArgs(name, funcs, _args, _callback);
+  const ctx = utils.validateArgs(name, funcs, _args, _callback);
 
-  let i = 0,
-    n = funcs.length,
+  var i = 0,
+    stopped = false;
+  const n = funcs.length,
     ee = new EventEmitter(),
     useCallback = {
       each: false,
       error: false
-    },
-    stopped = false;
+    };
 
   ee.name = name;
   utils.attachHandlers(ee, useCallback, ctx.callback);
@@ -31,7 +31,7 @@ function parallel(funcs, _args, _callback) {
   }
 
   function handle(err) {
-    let eachArgs = utils.slice.apply(null, arguments).slice(1);
+    const eachArgs = utils.slice.apply(null, arguments).slice(1);
     i++;
     if (err) {
       if (stopped) {
@@ -57,13 +57,15 @@ function parallel(funcs, _args, _callback) {
   ctx.args.push(handle);
 
   process.nextTick(() => {
-    let e = utils.ensureListeners(ee, useCallback);
+    const e = utils.ensureListeners(ee, useCallback);
     if (e) {
       return ee.emit('error', e);
     }
     if (n === 0) {
-      ee.emit('each');
-      return ee.emit('done');
+      if (ee.listenerCount('done')) {
+        return ee.emit('done');
+      }
+      return ee.emit('each');
     }
     funcs.forEach(fn => {
       fn.apply(null, ctx.args);

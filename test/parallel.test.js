@@ -102,8 +102,7 @@ suite('parallel', function() {
         eachVals.push(val);
         if (recv < n) {
           assert.equal('function', typeof stop);
-        }
-        else {
+        } else {
           assert.equal(null, stop);
           eachVals.push('stop is null');
         }
@@ -177,12 +176,20 @@ suite('parallel', function() {
       .on('error', err => assert.ifError(err));
   });
 
-  test('should call done immediately when function array is empty', done => {
-    parallel([], err => {
-      assert.ifError(err);
-      done();
+  test('should call each immediately when function array is empty ' +
+    'and no done event has been registered', done => {
+      parallel([], err => {
+        assert.ifError(err);
+        done();
+      });
     });
-  });
+
+  test('should not call each immediately when function array is empty ' +
+    'and done event has been registered', done => {
+      parallel([], err => {
+        assert(false, err);
+      }).on('done', () => done());
+    });
 
   test('invalid function array arguments should throw TypeError', done => {
     const arrayMsg = 'Parallel: first argument must be an array';
