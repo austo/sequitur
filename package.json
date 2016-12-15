@@ -1,6 +1,6 @@
 {
   "name": "sequitur",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Minimal sequential flow control library with resume",
   "main": "index.js",
   "directories": {
