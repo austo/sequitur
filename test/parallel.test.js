@@ -97,7 +97,7 @@ suite('parallel', function() {
         assert.equal('function', typeof stop);
         errs.push(err);
       })
-      .on('each', (stop, val) => {
+      .on('each', (val, stop) => {
         recv++;
         eachVals.push(val);
         if (recv < n) {

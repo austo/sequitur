@@ -43,9 +43,11 @@ function parallel(funcs, _args, _callback) {
       ee.emit('error', err);
       return ee.emit('done');
     }
-    eachArgs.unshift((i < n) ? stop : null);
     if (useCallback['each']) {
+      eachArgs.unshift((i < n) ? stop : null);
       eachArgs.unshift(null);
+    } else {
+      eachArgs.push((i < n) ? stop : null);
     }
     eachArgs.unshift('each');
     ee.emit.apply(ee, eachArgs);
